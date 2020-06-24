@@ -1,4 +1,4 @@
-ray>=0.8.5
+twisted>=20.3.0
 Fiona>=1.8
 rasterio>=1.1
 netcdf4>=1.5
