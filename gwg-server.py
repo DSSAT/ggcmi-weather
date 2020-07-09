@@ -80,12 +80,12 @@ def initialize_data():
     prop_map, multipoint = load_map_points(valid_points, config["station_id_field"])
     if "samples" not in config or config["samples"] is None:
         config["samples"] = len(valid_points)
-    station_ids = (
+    station_ids = [
         get_data_from_nearest_point(p, prop_map, multipoint)
         for p in valid_points[: config["samples"]]
-    )
+    ]
     print("Server data initialization complete.")
-    return station_ids
+    return iter(station_ids)
 
 
 if __name__ == "__main__":
@@ -99,9 +99,14 @@ if __name__ == "__main__":
         main_thread.start()
         server.transitionState()
         server.initializeData()
+        start_time = time.monotonic()
+        print("Starting to serve data.")
         # We will actually use the generator here
         while server.state != GWGServerState.FINALIZING:
             pass
+        end_time = time.monotonic()
+        print("Finished serving data. It took", end_time - start_time, "seconds.")
+        print("Resting for 35 seconds for any last connections.")
         time.sleep(35)
         end_time = time.monotonic()
         server.shutdown()

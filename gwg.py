@@ -88,7 +88,6 @@ def extract_data_from_point(data, conversions):
 
 def writeWeatherFile(point, station_id, station_data):
     host = socket.gethostname()
-    print("Writing file for {} from host {}".format(str(point), host))
     daily_data, tavg, tamp = station_data
     file_path = config["output_path"] / "{}.WTH".format(station_id)
     raw_lat, raw_lon = point
@@ -112,7 +111,6 @@ def writeWeatherFile(point, station_id, station_data):
 
 
 def generateDSSATWeather(lat_i, lon_i, station_id):
-    print("Starting generation")
     point = (lat_i, lon_i)
     data = np.array(
         [
@@ -122,7 +120,6 @@ def generateDSSATWeather(lat_i, lon_i, station_id):
             for i in range(len(config["mapping"]))
         ]
     )
-
     conversions = [e["conversion"] for e in config["mapping"]]
     converted = extract_data_from_point(data, conversions)
 
