@@ -1,0 +1,79 @@
+= Running GGCMI-Weather on SLURM-based systems
+Christopher Villalobos <cvillalobos@ufl.edu>
+v1.0.0, July 9, 2020: Initial release
+:icons: font
+
+== How it works
+
+
+=== Configuration
+Configuration is handled in the `config.py` script included in the application directory. The configuration consists of the following:
+
+==== Top Level Variables
+[horizontal]
+start_date:: a python `datetime` object used to indicate the starting date of the provided NetCDF files.
+station_vector:: the vector file used to bind a latitude and longitude to the weather staiton.
+station_id_field:: the field within the vector file used to indicate the file name of the weather station.
+output_dir:: the directory into which the weather files will be generated.
+
+==== Mapping variables
+Each object underneath the `mapping` block consists of the following:
+[horizontal]
+file:: The NetCDF file to extract data from
+netcdfVar:: The variable to extract from the NetCDF file
+dssatVar:: The variable the `netcdfVar` represents in the DSSAT weather file.
+conversion:: A `lambda` used to convert the unit inside the NetCDF file to the appropriate DSSAT unit.
+
+[NOTE]
+The order in which the `mapping` is defined is the column order in the DSSAT Weather file.
+
+
+=== Start the server
+
+1. Edit the `slurm-runserver.sh` file.
++
+The only pieces to modify should be `--cpus-per-task` or `--time`. `--cpus-per-task` should be set between 10-15. `--time` should be set *over* the expected length of time to execute.
+
+2. Submit the `slurm-runserver.sh` job.
++
+----
+> sbatch slrum-runserver.sh
+Submitted batch job 1234567
+----
+
+3. Wait for the server to actually start. This can be checked using the `squeuemine` from the `ufrc` module. When `ST` is `R` then the server is running.
++
+----
+> ml ufrc
+> squeuemine
+             JOBID    PARTITION              NAME       USER ST       TIME  NODES NODELIST(REASON)
+             1234567  hpg2-comp         GGCMI-SRV cvillalobo PD       0:00      1 (None)
+> squeuemine
+             JOBID    PARTITION              NAME       USER ST       TIME  NODES NODELIST(REASON)
+             1234567  hpg1-comp         GGCMI-SRV cvillalobo  R       0:45      1 c6a-s29
+----
+4. Retrieve the IP address from the sbatch log file: (Default is: `slurm-<jobid>.out`)
++
+----
+> cat slurm-1234567.out
+172.16.199.29 : 7781
+Python 3.7.6
+Server data initializing.
+> Number of valid points: 65797
+----
+
+=== Start the clients
+1. Edit the `slurm-runclients.sh`
++
+To configure the number of nodes/clients you want generating files set both the `#SBATCH --nodes` and `client_num` to the same value. You need to configure the `ip_address` to the same as from the last step in <<Start the server>>.
++
+[NOTE]
+You can always join more nodes to the server later. It takes less resources to start a small number of clients and will more likely get your job allocated. Just submit the `slurm-runclients.sh` again.
+2. Submit the `slurm-runclients.sh` job.
++
+----
+> sbatch slurm-runclients.sh
+Submitted batch job 12345679
+----
+
+As soon as the server initialized all the data, the clients will automatically start processing the weather files. When the server runs out of data to serve, it will automatically shut down, as will all the clients.
